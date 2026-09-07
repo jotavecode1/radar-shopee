@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radar Shopee — Produtos para Vídeo</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --card: #181b22;
+    --card2: #1f232c;
+    --line: #2a2f3a;
+    --txt: #e8eaed;
+    --txt2: #9aa0aa;
+    --accent: #ee4d2d;
+    --accent2: #ff6b4a;
+    --green: #2ecc71;
+    --amber: #f0a500;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--txt);
+    line-height: 1.5; padding: 24px 16px 64px;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 28px; }
+  h1 { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+  h1 span { color: var(--accent); }
+  header p { color: var(--txt2); font-size: 14px; }
+  .controls {
+    display: flex; gap: 12px; justify-content: center; align-items: center;
+    flex-wrap: wrap; margin-bottom: 28px;
+  }
+  .btn {
+    background: var(--accent); color: #fff; border: none;
+    padding: 13px 26px; font-size: 15px; font-weight: 600;
+    border-radius: 10px; cursor: pointer; transition: .15s;
+  }
+  .btn:hover { background: var(--accent2); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .field { display: flex; align-items: center; gap: 8px; color: var(--txt2); font-size: 14px; }
+  .field input { width: 56px; padding: 8px; background: var(--card2);
+    border: 1px solid var(--line); border-radius: 8px; color: var(--txt); text-align: center; }
+  #status { text-align: center; color: var(--txt2); font-size: 14px; margin-bottom: 20px; min-height: 20px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+  .prod {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px; cursor: pointer; transition: .15s; display: flex; gap: 12px;
+  }
+  .prod:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .prod.sel { border-color: var(--accent); background: var(--card2); }
+  .prod img { width: 64px; height: 64px; border-radius: 8px; object-fit: cover; background: var(--card2); flex-shrink: 0; }
+  .prod .info { flex: 1; min-width: 0; }
+  .prod .rank { font-size: 11px; color: var(--accent); font-weight: 700; }
+  .prod .nome {
+    font-size: 13px; font-weight: 500; margin: 2px 0 6px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .tags { display: flex; gap: 5px; flex-wrap: wrap; }
+  .tag { font-size: 11px; padding: 2px 7px; border-radius: 6px; background: var(--card2); color: var(--txt2); }
+  .tag.g { color: var(--green); } .tag.a { color: var(--amber); } .tag.c { color: var(--accent2); }
+  /* painel de roteiro */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.7);
+    display: none; align-items: flex-start; justify-content: center;
+    padding: 24px 16px; overflow-y: auto; z-index: 50;
+  }
+  .overlay.open { display: flex; }
+  .panel {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    max-width: 640px; width: 100%; padding: 24px;
+  }
+  .panel h2 { font-size: 18px; margin-bottom: 4px; }
+  .panel .sub { color: var(--txt2); font-size: 13px; margin-bottom: 18px; }
+  .block { margin-bottom: 16px; }
+  .block .lbl { font-size: 12px; color: var(--accent2); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 5px; }
+  .block .val { background: var(--card2); border: 1px solid var(--line); border-radius: 10px; padding: 12px; font-size: 14px; white-space: pre-wrap; }
+  .script-meta { font-size: 12px; color: var(--txt2); margin-top: 6px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+  .mini {
+    flex: 1; min-width: 120px; text-align: center; background: var(--card2);
+    border: 1px solid var(--line); border-radius: 8px; padding: 6px; font-size: 13px;
+    color: var(--txt); text-decoration: none; transition: .15s;
+  }
+  .mini:hover { border-color: var(--accent); }
+  .copy { background: none; border: 1px solid var(--line); color: var(--txt2);
+    padding: 5px 10px; border-radius: 7px; font-size: 12px; cursor: pointer; float: right; }
+  .copy:hover { border-color: var(--accent); color: var(--txt); }
+  .close { background: none; border: none; color: var(--txt2); font-size: 24px; cursor: pointer; float: right; line-height: 1; }
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--line);
+    border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -3px; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Radar <span>Shopee</span></h1>
+    <p>Melhores produtos para fazer vídeo — em todos os nichos</p>
+  </header>
+
+  <div class="controls">
+    <div class="field">
+      <label>Páginas</label>
+      <input type="number" id="paginas" value="4" min="1" max="10">
+    </div>
+    <button class="btn" id="btnBuscar" onclick="buscar()">Buscar produtos</button>
+  </div>
+
+  <div id="status"></div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="overlay" id="overlay" onclick="if(event.target===this)fechar()">
+  <div class="panel" id="panel"></div>
+</div>
+
+<script>
+let produtos = [];
+
+async function buscar() {
+  const btn = document.getElementById("btnBuscar");
+  const status = document.getElementById("status");
+  const grid = document.getElementById("grid");
+  const paginas = document.getElementById("paginas").value || 4;
+  btn.disabled = true;
+  grid.innerHTML = "";
+  status.innerHTML = '<span class="spinner"></span> Buscando na Shopee, isso leva ~30 segundos...';
+  try {
+    const r = await fetch(`/api/buscar?paginas=${paginas}`);
+    const d = await r.json();
+    if (d.erro) { status.textContent = "Erro: " + d.erro; return; }
+    produtos = d.produtos;
+    status.textContent = `${produtos.length} produtos encontrados — clique em um para gerar o roteiro`;
+    renderGrid();
+  } catch (e) {
+    status.textContent = "Erro de conexão: " + e.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderGrid() {
+  const grid = document.getElementById("grid");
+  grid.innerHTML = produtos.map((p, i) => {
+    const concLabel = p.concorrencia_baixa > 0.6 ? "baixa" : p.concorrencia_baixa > 0.4 ? "média" : "alta";
+    const concClass = p.concorrencia_baixa > 0.6 ? "g" : p.concorrencia_baixa > 0.4 ? "a" : "c";
+    return `<div class="prod" onclick="abrir(${i}, this)">
+      <img src="${p.imagem || ''}" onerror="this.style.opacity=.3">
+      <div class="info">
+        <div class="rank">#${p.posicao} · score ${p.score}</div>
+        <div class="nome">${p.produto}</div>
+        <div class="tags">
+          <span class="tag g">${p.comissao}% · R$${p.ganho}</span>
+          <span class="tag ${concClass}">conc. ${concLabel}</span>
+          <span class="tag">${p.vendas} vendas</span>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+async function abrir(i, el) {
+  document.querySelectorAll(".prod").forEach(x => x.classList.remove("sel"));
+  el.classList.add("sel");
+  const p = produtos[i];
+  const overlay = document.getElementById("overlay");
+  const panel = document.getElementById("panel");
+  overlay.classList.add("open");
+  panel.innerHTML = '<div style="text-align:center;padding:40px"><span class="spinner"></span> Montando o roteiro...</div>';
+
+  try {
+    const r = await fetch("/api/roteiro", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ produto: p }),
+    });
+    const d = await r.json();
+    if (d.erro) { panel.innerHTML = `<button class="close" onclick="fechar()">×</button><p>Erro: ${d.erro}</p>`; return; }
+
+    panel.innerHTML = `
+      <button class="close" onclick="fechar()">×</button>
+      <h2>${p.produto}</h2>
+      <div class="sub">R$${p.preco} · ${p.comissao}% comissão (R$${p.ganho}/venda) · ${p.vendas} vendas · ${p.rating}⭐</div>
+
+      <div class="block">
+        <div class="lbl">🎣 Gancho (primeiros 3s)</div>
+        <div class="val">${d.gancho}</div>
+      </div>
+      <div class="block">
+        <div class="lbl">🎬 Ângulo do vídeo</div>
+        <div class="val">${d.angulo}</div>
+      </div>
+      <div class="block">
+        <div class="lbl">📢 CTA (legenda)</div>
+        <div class="val">${d.cta}</div>
+      </div>
+      <div class="block">
+        <div class="lbl">📝 Script pronto <button class="copy" onclick="copiar(\`${d.script.replace(/`/g,'\\`')}\`)">copiar</button></div>
+        <div class="val">${d.script}</div>
+        <div class="script-meta">${d.caracteres} caracteres (limite 901 ✓)</div>
+      </div>
+      <div class="row">
+        <a class="mini" href="${p.link_afiliado}" target="_blank">🔗 Link afiliado (seu)</a>
+        <a class="mini" href="${p.link_produto}" target="_blank">🛍️ Página do produto</a>
+      </div>
+    `;
+  } catch (e) {
+    panel.innerHTML = `<button class="close" onclick="fechar()">×</button><p>Erro: ${e.message}</p>`;
+  }
+}
+
+function fechar() { document.getElementById("overlay").classList.remove("open"); }
+function copiar(txt) {
+  navigator.clipboard.writeText(txt);
+  event.target.textContent = "copiado!";
+  setTimeout(() => event.target.textContent = "copiar", 1500);
+}
+</script>
+</body>
+</html>

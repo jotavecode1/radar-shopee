@@ -1,0 +1,7 @@
+{
+  "name": "radar-shopee",
+  "version": "1.0.0",
+  "description": "Radar de produtos Shopee para vídeo",
+  "type": "module",
+  "private": true
+}

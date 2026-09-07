@@ -1,0 +1,6 @@
+{
+  "functions": {
+    "api/buscar.js": { "maxDuration": 60 },
+    "api/roteiro.js": { "maxDuration": 10 }
+  }
+}
