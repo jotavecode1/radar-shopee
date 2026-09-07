@@ -27,7 +27,9 @@
   .field { display:flex; align-items:center; gap:8px; color:var(--txt2); font-size:14px; }
   .field input { width:56px; padding:8px; background:var(--card2); border:1px solid var(--line);
     border-radius:8px; color:var(--txt); text-align:center; }
-  .filtros { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:20px; }
+  .filtros { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:10px; }
+  .filtros-cat { margin-bottom:20px; }
+  .filtros-cat .filtro { font-size:12px; padding:5px 12px; }
   .filtro { padding:7px 14px; border-radius:20px; font-size:13px; cursor:pointer;
     border:1px solid var(--line); background:transparent; color:var(--txt2); transition:.15s; }
   .filtro:hover { border-color:var(--accent); color:var(--txt); }
@@ -94,12 +96,15 @@
     <button class="btn" id="btnBuscar" onclick="buscar()">Buscar produtos</button>
   </div>
 
-  <div class="filtros" id="filtros" style="display:none">
-    <div class="filtro on" data-f="todos" onclick="filtrar('todos',this)">Todos</div>
-    <div class="filtro" data-f="explodir" onclick="filtrar('explodir',this)">🚀 Pode explodir</div>
-    <div class="filtro" data-f="crescendo" onclick="filtrar('crescendo',this)">📈 Crescendo</div>
-    <div class="filtro" data-f="alta" onclick="filtrar('alta',this)">🔥 Em alta</div>
-    <div class="filtro" data-f="poucos" onclick="filtrar('poucos',this)">💎 Poucos afiliados</div>
+  <div id="filtrosArea" style="display:none">
+    <div class="filtros" id="filtrosFase">
+      <div class="filtro on" data-f="todos" onclick="setFase('todos',this)">Todas as fases</div>
+      <div class="filtro" data-f="explodir" onclick="setFase('explodir',this)">🚀 Pode explodir</div>
+      <div class="filtro" data-f="crescendo" onclick="setFase('crescendo',this)">📈 Crescendo</div>
+      <div class="filtro" data-f="alta" onclick="setFase('alta',this)">🔥 Em alta</div>
+      <div class="filtro" data-f="poucos" onclick="setFase('poucos',this)">💎 Poucos afiliados</div>
+    </div>
+    <div class="filtros filtros-cat" id="filtrosCat"></div>
   </div>
 
   <div id="status"></div>
@@ -112,7 +117,8 @@
 
 <script>
 let produtos = [];
-let filtroAtivo = "todos";
+let faseAtiva = "todos";
+let catAtiva = "todas";
 
 const FASE_LABEL = {
   explodir: "🚀 Pode explodir",
@@ -127,7 +133,7 @@ async function buscar() {
   const paginas = document.getElementById("paginas").value || 4;
   btn.disabled = true;
   grid.innerHTML = "";
-  document.getElementById("filtros").style.display = "none";
+  document.getElementById("filtrosArea").style.display = "none";
   status.innerHTML = '<span class="spinner"></span> Buscando na Shopee, isso leva ~30 segundos...';
   try {
     const r = await fetch(`/api/buscar?paginas=${paginas}`);
@@ -135,9 +141,11 @@ async function buscar() {
     if (d.erro) { status.textContent = "Erro: " + d.erro; return; }
     produtos = d.produtos;
     status.textContent = `${produtos.length} produtos encontrados — clique em um para gerar o conteúdo`;
-    document.getElementById("filtros").style.display = "flex";
-    filtroAtivo = "todos";
-    document.querySelectorAll(".filtro").forEach(x => x.classList.toggle("on", x.dataset.f === "todos"));
+    document.getElementById("filtrosArea").style.display = "block";
+    faseAtiva = "todos";
+    catAtiva = "todas";
+    document.querySelectorAll("#filtrosFase .filtro").forEach(x => x.classList.toggle("on", x.dataset.f === "todos"));
+    montarFiltrosCategoria();
     renderGrid();
   } catch (e) {
     status.textContent = "Erro de conexão: " + e.message;
@@ -146,17 +154,43 @@ async function buscar() {
   }
 }
 
-function filtrar(f, el) {
-  filtroAtivo = f;
-  document.querySelectorAll(".filtro").forEach(x => x.classList.remove("on"));
+function montarFiltrosCategoria() {
+  const cont = document.getElementById("filtrosCat");
+  // conta quantos produtos por categoria e ordena por quantidade
+  const contagem = {};
+  produtos.forEach(p => { contagem[p.categoria] = (contagem[p.categoria] || 0) + 1; });
+  const cats = Object.keys(contagem).sort((a, b) => contagem[b] - contagem[a]);
+  let html = `<div class="filtro on" data-c="todas" onclick="setCat('todas',this)">Todas as categorias</div>`;
+  html += cats.map(c =>
+    `<div class="filtro" data-c="${c}" onclick="setCat('${c.replace(/'/g,"\\'")}',this)">${c} (${contagem[c]})</div>`
+  ).join("");
+  cont.innerHTML = html;
+}
+
+function setFase(f, el) {
+  faseAtiva = f;
+  document.querySelectorAll("#filtrosFase .filtro").forEach(x => x.classList.remove("on"));
+  el.classList.add("on");
+  renderGrid();
+}
+
+function setCat(c, el) {
+  catAtiva = c;
+  document.querySelectorAll("#filtrosCat .filtro").forEach(x => x.classList.remove("on"));
   el.classList.add("on");
   renderGrid();
 }
 
 function listaFiltrada() {
-  if (filtroAtivo === "todos") return produtos;
-  if (filtroAtivo === "poucos") return produtos.filter(p => p.poucos_afiliados);
-  return produtos.filter(p => p.fase === filtroAtivo);
+  return produtos.filter(p => {
+    // filtro de fase
+    let passaFase = true;
+    if (faseAtiva === "poucos") passaFase = p.poucos_afiliados;
+    else if (faseAtiva !== "todos") passaFase = p.fase === faseAtiva;
+    // filtro de categoria
+    const passaCat = catAtiva === "todas" || p.categoria === catAtiva;
+    return passaFase && passaCat;
+  });
 }
 
 function renderGrid() {
@@ -178,6 +212,7 @@ function renderGrid() {
         <div class="rank">#${p.posicao} · score ${p.score}</div>
         <div class="nome">${p.produto}</div>
         <div class="tags">
+          <span class="tag" style="color:var(--txt);background:var(--line)">${p.categoria}</span>
           <span class="tag g">${p.comissao}%${rec}</span>
           <span class="tag">R$${p.ganho}/venda</span>
           <span class="tag ${concClass}">conc. ${concLabel}</span>
