@@ -66,6 +66,28 @@ function classificarFase(p) {
   return "crescendo";
 }
 
+// Classifica o produto numa categoria "estilo Shopee" pelo nome.
+// A API retorna só o ID numérico da categoria (productCatIds), sem o nome,
+// então classificar pelo nome do produto é mais estável e legível.
+const CAT_REGRAS = [
+  ["Bebê & Infantil", ["bebê","bebe","maternidade","gestante","fralda","mamadeira","infantil","criança","crianca","brinquedo"]],
+  ["Beleza & Cuidado", ["sérum","serum","skincare","clareador","hidratante","protetor solar","shampoo","condicionador","máscara facial","batom","base","perfume","creme facial","maquiagem","cílios","cilios","unha","esmalte","depilador","sabonete","óleo capilar"]],
+  ["Saúde & Bem-estar", ["melatonina","colágeno","colageno","vitamina","suplemento","cápsula","capsula","whey","creatina","ômega","omega","proteína","protein","chá emagr","termogênico"]],
+  ["Pet", ["pet","cachorro","gato","ração","racao","coleira","comedouro"]],
+  ["Moda & Fitness", ["academia","fitness","legging","top fitness","suplex","conjunto","short","calça","calçado","tênis","tenis","camiseta","blusa","vestido","biquíni","biquini","sutiã","calcinha","cueca","meia","modeladora","cinta","jaqueta","moletom","pijama","bermuda","bolsa","mochila","carteira","óculos"]],
+  ["Eletrônicos", ["fone","bluetooth","carregador","cabo","usb","câmera","camera","smart","fonte tipo c","mouse","teclado","caixa de som","power bank","relógio","smartwatch","ventilador"]],
+  ["Limpeza & Utilidades", ["percarbonato","tira mancha","tira-mancha","desinfetante","detergente","limpa","alvejante","esponja","vassoura","rodo","luva"]],
+  ["Casa & Decoração", ["manta","cobertor","lençol","lencol","lixeira","organizador","cabide","toalha","tapete","cortina","luminária","luminaria","led","lâmpada","lampada","arandela","espelho","decoração","decoracao","almofada","vaso","panela","copo","garrafa","térmica","termica","utensílio","talher","boleira","forma","assadeira","air fryer","liquidificador","cozedor","fatiador","marmita","pote"]],
+];
+
+function categoriaDoProduto(nome) {
+  const n = (nome || "").toLowerCase();
+  for (const [cat, kws] of CAT_REGRAS) {
+    if (kws.some((k) => n.includes(k))) return cat;
+  }
+  return "Outros";
+}
+
 function pontuar(produtos) {
   produtos.forEach((p) => {
     p._comissao = num(p.commissionRate) * 100;
@@ -137,6 +159,7 @@ export default async function handler(req, res) {
       posicao: i + 1,
       score: Math.round(p._score * 100),
       fase: p._fase, // "explodir" | "crescendo" | "alta"
+      categoria: categoriaDoProduto(p.productName),
       concorrencia_baixa: Math.round(p._concorrencia * 100) / 100,
       poucos_afiliados: p._concorrencia >= 0.55, // proxy de baixa concorrencia
       produto: p.productName,
