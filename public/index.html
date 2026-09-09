@@ -100,11 +100,11 @@
 
   <!-- ETAPA 1: escolher nicho -->
   <div id="etapaNicho">
-    <div class="step-title">1. Escolha o nicho que você quer explorar</div>
+    <div class="step-title">1. Escolha um nicho — ou busque em todos</div>
     <div class="nichos" id="nichos"></div>
     <div class="controls">
       <div class="field"><label>Páginas por busca</label><input type="number" id="paginas" value="3" min="1" max="10"></div>
-      <button class="btn" id="btnBuscar" onclick="buscar()" disabled>Buscar produtos</button>
+      <button class="btn" id="btnBuscar" onclick="buscar()">Buscar em todos os nichos</button>
     </div>
   </div>
 
@@ -120,6 +120,7 @@
       <div class="filtro" data-f="crescendo" onclick="setFase('crescendo',this)">📈 Crescendo</div>
       <div class="filtro" data-f="alta" onclick="setFase('alta',this)">🔥 Em alta</div>
       <div class="filtro" data-f="poucos" onclick="setFase('poucos',this)">💎 Menos concorrência</div>
+      <div class="filtro" data-f="destaque" onclick="setFase('destaque',this)">⭐ Destaque no vídeo</div>
     </div>
     <div id="status"></div>
     <div class="grid" id="grid"></div>
@@ -157,10 +158,18 @@ document.getElementById("nichos").innerHTML = NICHOS.map(n=>
 ).join("");
 
 function selecionarNicho(id,el){
+  // clicar de novo no mesmo nicho desmarca (volta para "todos")
+  if(nichoSel===id){
+    nichoSel=null;
+    el.classList.remove("sel");
+    document.getElementById("btnBuscar").textContent="Buscar em todos os nichos";
+    return;
+  }
   nichoSel=id;
   document.querySelectorAll(".nicho").forEach(x=>x.classList.remove("sel"));
   el.classList.add("sel");
-  document.getElementById("btnBuscar").disabled=false;
+  const nome=(NICHOS.find(n=>n.id===id)||{}).nome||id;
+  document.getElementById("btnBuscar").textContent="Buscar em "+nome;
 }
 
 function voltarNicho(){
@@ -169,22 +178,22 @@ function voltarNicho(){
 }
 
 async function buscar(){
-  if(!nichoSel){alert("Escolha um nicho primeiro.");return;}
   const paginas=document.getElementById("paginas").value||3;
   document.getElementById("etapaNicho").classList.add("hidden");
   document.getElementById("etapaResultados").classList.remove("hidden");
   const status=document.getElementById("status");
   const grid=document.getElementById("grid");
   grid.innerHTML="";
-  const nomeNicho=(NICHOS.find(n=>n.id===nichoSel)||{}).nome||nichoSel;
-  status.innerHTML=`<span class="spinner"></span> Buscando produtos de "${nomeNicho}" na Shopee...`;
+  const nomeNicho = nichoSel ? ((NICHOS.find(n=>n.id===nichoSel)||{}).nome||nichoSel) : "todos os nichos";
+  const nichoParam = nichoSel || "todos";
+  status.innerHTML=`<span class="spinner"></span> Buscando campeões de venda em "${nomeNicho}"... ${nichoSel?"":"(pode levar 1-2 min)"}`;
   try{
-    const r=await fetch(`/api/buscar?nicho=${encodeURIComponent(nichoSel)}&paginas=${paginas}`);
+    const r=await fetch(`/api/buscar?nicho=${encodeURIComponent(nichoParam)}&paginas=${paginas}`);
     const d=await r.json();
     if(d.erro){status.textContent="Erro: "+d.erro;return;}
     produtos=d.produtos;
-    if(!produtos.length){status.textContent="Nenhum produto encontrado neste nicho. Tente outro.";return;}
-    status.textContent=`${produtos.length} produtos de "${nomeNicho}" — clique em um para gerar o conteúdo`;
+    if(!produtos.length){status.textContent="Nenhum produto encontrado. Tente outro nicho ou mais páginas.";return;}
+    status.textContent=`${produtos.length} campeões de venda em "${nomeNicho}" — clique em um para gerar o conteúdo`;
     faseAtiva="todos";
     document.querySelectorAll("#filtrosFase .filtro").forEach(x=>x.classList.toggle("on",x.dataset.f==="todos"));
     renderGrid();
@@ -203,6 +212,7 @@ function setFase(f,el){
 function listaFiltrada(){
   if(faseAtiva==="todos")return produtos;
   if(faseAtiva==="poucos")return produtos.filter(p=>p.poucos_afiliados);
+  if(faseAtiva==="destaque")return produtos.filter(p=>p.destaque_video);
   return produtos.filter(p=>p.fase===faseAtiva);
 }
 
@@ -226,6 +236,7 @@ function renderGrid(){
           <span class="tag">R$${p.ganho}/venda</span>
           <span class="tag ${cc}">conc. ${cl}</span>
           <span class="tag">${p.vendas} vendas</span>
+          ${p.destaque_video?'<span class="tag" style="color:var(--amber)">⭐ destaque</span>':''}
         </div>
       </div>
     </div>`;
