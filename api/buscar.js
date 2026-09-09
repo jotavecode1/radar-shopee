@@ -10,17 +10,31 @@ const CAMPOS =
 
 // Palavras-chave de busca por nicho. A API busca por keyword.
 const NICHOS = {
-  "cozinha":         ["cozinha","utensílio cozinha","organizador cozinha","panela","air fryer"],
-  "casa":            ["decoração casa","organizador","luminária","cortina","tapete"],
-  "beleza":          ["skincare","maquiagem","sérum facial","protetor solar","perfume"],
+  "cozinha":         ["utensílios cozinha","organizador cozinha","panela antiaderente","air fryer","potes herméticos"],
+  "casa":            ["organizador casa","luminária mesa","cortina blackout","tapete sala","cabide"],
+  "beleza":          ["skincare","maquiagem","sérum facial","protetor solar","perfume feminino"],
   "saude":           ["suplemento","vitamina","colágeno","whey protein","melatonina"],
-  "fitness":         ["roupa academia","legging fitness","conjunto fitness","tênis corrida"],
-  "moda_feminina":   ["vestido feminino","blusa feminina","conjunto feminino","saia","bolsa feminina"],
-  "eletronicos":     ["fone bluetooth","carregador","smartwatch","caixa de som","led"],
-  "pet":             ["pet","cachorro","gato","comedouro","coleira"],
-  "bebe":            ["bebê","maternidade","enxoval","brinquedo infantil"],
-  "natal":           ["natal","decoração natal","enfeite natal","presente natal","pisca pisca natal"],
+  "fitness":         ["roupa academia","legging fitness","conjunto fitness feminino","tênis academia"],
+  "moda_feminina":   ["vestido feminino","blusa feminina","conjunto feminino","saia feminina","bolsa feminina"],
+  "eletronicos":     ["fone bluetooth","carregador turbo","smartwatch","caixa de som bluetooth","fita led"],
+  "pet":             ["comedouro pet","coleira cachorro","brinquedo pet","cama pet"],
+  "bebe":            ["enxoval bebê","mamadeira","organizador maternidade","brinquedo bebê"],
+  "natal":           ["decoração natal","enfeite natal","árvore de natal","pisca pisca natal","guirlanda natal"],
 };
+
+// LISTA DE BLOQUEIO: produtos que nunca devem aparecer (poluem os resultados).
+// Quadros, pôsteres, adesivos de parede etc. entram por engano nas buscas amplas.
+const BLOQUEADOS = [
+  "quadro","quadros","poster","pôster","posters","pôsteres","placa decorativa",
+  "adesivo","adesivos","papel de parede","gravura","tela decorativa","tela canvas",
+  "banner","painel decorativo","plexiglass","acrílico decorativo","toalha personalizada",
+  "caneca personalizada","camiseta personalizada","chaveiro personalizado",
+];
+
+function ehBloqueado(nome) {
+  const n = (nome || "").toLowerCase();
+  return BLOQUEADOS.some((b) => n.includes(b));
+}
 
 function assinar(appId, secret, payload) {
   const ts = Math.floor(Date.now() / 1000);
@@ -67,6 +81,26 @@ function ranquear(valores) {
 }
 
 // Classifica a fase pelo que a API permite deduzir (sem histórico).
+// Produtos/categorias que costumam se destacar sozinhos no vídeo:
+// efeito visual "uau" ou resolvem um problema claro (bom para antes/depois).
+const PALAVRAS_CHAMATIVAS = [
+  // efeito visual / satisfatório
+  "led","luminária","luminaria","projetor","galaxy","rgb","neon","fumaça","umidificador",
+  "aquário","fonte","giratór","automático","automatico","elétrico","eletrico","portátil","dobrável","dobravel",
+  // resolve problema claro / antes e depois
+  "limpa","tira mancha","clareador","organizador","descasca","fatiador","cortador","removedor",
+  "corretor","modelador","emagrec","anti","massageador","aparador","depilador","escova alisadora",
+];
+
+function indiceDestaque(p) {
+  const n = (p.productName || "").toLowerCase();
+  let d = 0;
+  if (PALAVRAS_CHAMATIVAS.some((k) => n.includes(k))) d += 0.6; // tem apelo visual/problema
+  if (p._desconto >= 20) d += 0.2; // desconto forte chama atenção
+  if (p._rating >= 4.7) d += 0.2;  // muito bem avaliado = mostra bem no vídeo
+  return Math.min(d, 1);
+}
+
 function classificarFase(p) {
   if (p._vendas >= 500) return "alta";
   if (p._rating >= 4.6 && p._comissao >= 11 && p._concorrencia >= 0.55) return "explodir";
@@ -80,13 +114,10 @@ function pontuar(produtos) {
     p._rating = num(p.ratingStar);
     p._preco = num(p.priceMin);
     p._ganho = num(p.commission);
+    p._desconto = num(p.priceDiscountRate);
   });
 
   // --- PROXY DE "MENOS AFILIADOS" (concorrência) ---
-  // A API não informa nº de afiliados. Estimamos por:
-  //  - densidade da loja nos resultados (loja muito repetida = mais divulgada)
-  //  - saturação por vendas (produto no topo de vendas = já explorado)
-  //  - tipo de loja (Mall/oficial atrai muito mais afiliados)
   const freq = {};
   produtos.forEach((p) => (freq[p.shopId] = (freq[p.shopId] || 0) + 1));
   const maxFreq = Math.max(...Object.values(freq), 1);
@@ -97,9 +128,8 @@ function pontuar(produtos) {
     const dens = (freq[p.shopId] - 1) / Math.max(maxFreq - 1, 1);
     const tipos = p.shopType || [];
     const oficial = Array.isArray(tipos) && tipos.some((t) => [1, 2, 4].includes(Number(t))) ? 1 : 0;
-    // saturação alta => concorrência alta => menos espaço para viralizar
     const saturacao = 0.45 * satVen + 0.35 * dens + 0.20 * oficial;
-    p._concorrencia = 1 - saturacao; // 1 = pouca concorrência (bom)
+    p._concorrencia = 1 - saturacao;
   });
 
   const rCom = ranquear(produtos.map((p) => p._comissao));
@@ -107,12 +137,15 @@ function pontuar(produtos) {
   const rRat = ranquear(produtos.map((p) => p._rating));
 
   produtos.forEach((p) => {
-    // PESO MAIOR em concorrência baixa, como o usuário pediz (menos afiliados manda)
+    p._destaque = indiceDestaque(p);
+    // EQUILÍBRIO: vendas fortes E espaço para viralizar E destaque no vídeo.
+    // vendas 30% + concorrência baixa 30% + destaque 20% + comissão 15% + rating 5%
     p._score =
-      0.50 * p._concorrencia +
-      0.25 * rCom[p._comissao] +
-      0.15 * rVen2[p._vendas] +
-      0.10 * rRat[p._rating];
+      0.30 * rVen2[p._vendas] +
+      0.30 * p._concorrencia +
+      0.20 * p._destaque +
+      0.15 * rCom[p._comissao] +
+      0.05 * rRat[p._rating];
     p._fase = classificarFase(p);
   });
   return produtos;
@@ -129,9 +162,20 @@ export default async function handler(req, res) {
 
   const paginas = Math.min(parseInt(req.query.paginas) || 3, 10);
   const nicho = (req.query.nicho || "").toLowerCase();
-  const keywords = NICHOS[nicho];
-  if (!keywords) {
-    return res.status(400).json({ erro: "Nicho inválido. Escolha um nicho da lista." });
+
+  // Se não escolher nicho (ou escolher "todos"), busca em TODOS os nichos.
+  let keywords;
+  if (!nicho || nicho === "todos") {
+    // pega 2 palavras-chave de cada nicho para cobrir tudo sem estourar o tempo
+    keywords = [];
+    for (const lista of Object.values(NICHOS)) {
+      keywords.push(...lista.slice(0, 2));
+    }
+  } else {
+    keywords = NICHOS[nicho];
+    if (!keywords) {
+      return res.status(400).json({ erro: "Nicho inválido. Escolha um nicho da lista." });
+    }
   }
 
   try {
@@ -150,9 +194,9 @@ export default async function handler(req, res) {
     }
 
     let produtos = Object.values(vistos);
-    // FILTRO: comissão SEMPRE acima de 5%, rating mínimo 4, vendas mínimas 30
+    // FILTRO: campeões de venda (>=150 vendas), sem bloqueados, comissão >5%, rating >=4.3
     produtos = pontuar(produtos).filter(
-      (p) => p._vendas >= 30 && p._rating >= 4 && p._comissao > 5
+      (p) => !ehBloqueado(p.productName) && p._vendas >= 150 && p._rating >= 4.3 && p._comissao > 5
     );
     // Ordena priorizando MENOS concorrência (score já pesa 50% nisso)
     produtos.sort((a, b) => b._score - a._score);
@@ -164,6 +208,7 @@ export default async function handler(req, res) {
       fase: p._fase,
       concorrencia_baixa: Math.round(p._concorrencia * 100) / 100,
       poucos_afiliados: p._concorrencia >= 0.6,
+      destaque_video: p._destaque >= 0.6, // se destaca sozinho no vídeo
       produto: p.productName,
       preco: Math.round(p._preco * 100) / 100,
       comissao: Math.round(p._comissao),
