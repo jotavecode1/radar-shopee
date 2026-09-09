@@ -5,110 +5,125 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Radar Shopee — Produtos para Vídeo</title>
 <style>
-  :root {
-    --bg:#0f1115; --card:#181b22; --card2:#1f232c; --line:#2a2f3a;
-    --txt:#e8eaed; --txt2:#9aa0aa; --accent:#ee4d2d; --accent2:#ff6b4a;
-    --green:#2ecc71; --amber:#f0a500; --blue:#4a9eff; --purple:#a06bff;
-  }
-  * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg);
-    color:var(--txt); line-height:1.5; padding:24px 16px 64px; }
-  .wrap { max-width:1000px; margin:0 auto; }
-  header { text-align:center; margin-bottom:24px; }
-  h1 { font-size:26px; font-weight:700; margin-bottom:6px; }
-  h1 span { color:var(--accent); }
-  header p { color:var(--txt2); font-size:14px; }
-  .controls { display:flex; gap:12px; justify-content:center; align-items:center;
-    flex-wrap:wrap; margin-bottom:18px; }
-  .btn { background:var(--accent); color:#fff; border:none; padding:13px 26px;
-    font-size:15px; font-weight:600; border-radius:10px; cursor:pointer; transition:.15s; }
-  .btn:hover { background:var(--accent2); }
-  .btn:disabled { opacity:.5; cursor:not-allowed; }
-  .field { display:flex; align-items:center; gap:8px; color:var(--txt2); font-size:14px; }
-  .field input { width:56px; padding:8px; background:var(--card2); border:1px solid var(--line);
-    border-radius:8px; color:var(--txt); text-align:center; }
-  .filtros { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:10px; }
-  .filtros-cat { margin-bottom:20px; }
-  .filtros-cat .filtro { font-size:12px; padding:5px 12px; }
-  .filtro { padding:7px 14px; border-radius:20px; font-size:13px; cursor:pointer;
-    border:1px solid var(--line); background:transparent; color:var(--txt2); transition:.15s; }
-  .filtro:hover { border-color:var(--accent); color:var(--txt); }
-  .filtro.on { background:var(--accent); color:#fff; border-color:var(--accent); }
-  #status { text-align:center; color:var(--txt2); font-size:14px; margin-bottom:20px; min-height:20px; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
-  .prod { background:var(--card); border:1px solid var(--line); border-radius:12px;
-    padding:14px; cursor:pointer; transition:.15s; display:flex; gap:12px; position:relative; }
-  .prod:hover { border-color:var(--accent); transform:translateY(-2px); }
-  .prod img { width:64px; height:64px; border-radius:8px; object-fit:cover;
-    background:var(--card2); flex-shrink:0; }
-  .prod .info { flex:1; min-width:0; }
-  .prod .rank { font-size:11px; color:var(--accent); font-weight:700; }
-  .prod .nome { font-size:13px; font-weight:500; margin:2px 0 6px;
-    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-  .tags { display:flex; gap:5px; flex-wrap:wrap; }
-  .tag { font-size:11px; padding:2px 7px; border-radius:6px; background:var(--card2); color:var(--txt2); }
-  .tag.g { color:var(--green); } .tag.a { color:var(--amber); } .tag.c { color:var(--accent2); }
-  .fase { position:absolute; top:10px; right:10px; font-size:10px; font-weight:700;
-    padding:3px 8px; border-radius:20px; }
-  .fase.explodir { background:rgba(160,107,255,.15); color:var(--purple); }
-  .fase.crescendo { background:rgba(74,158,255,.15); color:var(--blue); }
-  .fase.alta { background:rgba(46,204,113,.15); color:var(--green); }
-  .selo-rec { display:inline-block; font-size:10px; font-weight:700; color:var(--amber);
-    border:1px solid var(--amber); border-radius:4px; padding:0 4px; margin-left:4px; }
-  .overlay { position:fixed; inset:0; background:rgba(0,0,0,.75); display:none;
-    align-items:flex-start; justify-content:center; padding:24px 16px; overflow-y:auto; z-index:50; }
-  .overlay.open { display:flex; }
-  .panel { background:var(--card); border:1px solid var(--line); border-radius:16px;
-    max-width:640px; width:100%; padding:24px; }
-  .panel h2 { font-size:17px; margin-bottom:4px; padding-right:30px; }
-  .panel .sub { color:var(--txt2); font-size:13px; margin-bottom:18px; }
-  .block { margin-bottom:16px; }
-  .block .lbl { font-size:12px; color:var(--accent2); font-weight:700; text-transform:uppercase;
-    letter-spacing:.5px; margin-bottom:5px; }
-  .block .val { background:var(--card2); border:1px solid var(--line); border-radius:10px;
-    padding:12px; font-size:13px; white-space:pre-wrap; line-height:1.6; }
-  .meta { font-size:11px; color:var(--txt2); margin-top:5px; }
-  .row { display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; }
-  .mini { flex:1; min-width:120px; text-align:center; background:var(--card2);
-    border:1px solid var(--line); border-radius:8px; padding:9px; font-size:13px;
-    color:var(--txt); text-decoration:none; transition:.15s; }
-  .mini:hover { border-color:var(--accent); }
-  .copy { background:none; border:1px solid var(--line); color:var(--txt2);
-    padding:4px 10px; border-radius:7px; font-size:12px; cursor:pointer; float:right; }
-  .copy:hover { border-color:var(--accent); color:var(--txt); }
-  .close { background:none; border:none; color:var(--txt2); font-size:26px; cursor:pointer;
-    position:absolute; top:16px; right:20px; line-height:1; }
-  .spinner { display:inline-block; width:16px; height:16px; border:2px solid var(--line);
-    border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite;
-    vertical-align:-3px; margin-right:6px; }
-  @keyframes spin { to { transform:rotate(360deg); } }
+  :root{--bg:#0f1115;--card:#181b22;--card2:#1f232c;--line:#2a2f3a;--txt:#e8eaed;
+    --txt2:#9aa0aa;--accent:#ee4d2d;--accent2:#ff6b4a;--green:#2ecc71;--amber:#f0a500;
+    --blue:#4a9eff;--purple:#a06bff;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);
+    color:var(--txt);line-height:1.5;padding:24px 16px 64px;}
+  .wrap{max-width:1000px;margin:0 auto;}
+  header{text-align:center;margin-bottom:24px;}
+  h1{font-size:26px;font-weight:700;margin-bottom:6px;}
+  h1 span{color:var(--accent);}
+  header p{color:var(--txt2);font-size:14px;}
+  .step-title{text-align:center;font-size:15px;color:var(--txt2);margin-bottom:16px;}
+  /* etapa nicho */
+  .nichos{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:24px;}
+  .nicho{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 12px;
+    text-align:center;cursor:pointer;transition:.15s;font-size:14px;font-weight:500;}
+  .nicho:hover{border-color:var(--accent);transform:translateY(-2px);}
+  .nicho.sel{border-color:var(--accent);background:var(--card2);}
+  .nicho .emoji{font-size:26px;display:block;margin-bottom:6px;}
+  .controls{display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap;margin-bottom:18px;}
+  .btn{background:var(--accent);color:#fff;border:none;padding:13px 26px;font-size:15px;
+    font-weight:600;border-radius:10px;cursor:pointer;transition:.15s;}
+  .btn:hover{background:var(--accent2);}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-sec{background:transparent;border:1px solid var(--line);color:var(--txt2);}
+  .btn-sec:hover{border-color:var(--accent);color:var(--txt);background:transparent;}
+  .field{display:flex;align-items:center;gap:8px;color:var(--txt2);font-size:14px;}
+  .field input{width:56px;padding:8px;background:var(--card2);border:1px solid var(--line);
+    border-radius:8px;color:var(--txt);text-align:center;}
+  .filtros{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:20px;}
+  .filtro{padding:7px 14px;border-radius:20px;font-size:13px;cursor:pointer;border:1px solid var(--line);
+    background:transparent;color:var(--txt2);transition:.15s;}
+  .filtro:hover{border-color:var(--accent);color:var(--txt);}
+  .filtro.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+  #status{text-align:center;color:var(--txt2);font-size:14px;margin-bottom:20px;min-height:20px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+  .prod{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;
+    cursor:pointer;transition:.15s;display:flex;gap:12px;position:relative;}
+  .prod:hover{border-color:var(--accent);transform:translateY(-2px);}
+  .prod img{width:64px;height:64px;border-radius:8px;object-fit:cover;background:var(--card2);flex-shrink:0;}
+  .prod .info{flex:1;min-width:0;}
+  .prod .rank{font-size:11px;color:var(--accent);font-weight:700;}
+  .prod .nome{font-size:13px;font-weight:500;margin:2px 0 6px;display:-webkit-box;
+    -webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .tags{display:flex;gap:5px;flex-wrap:wrap;}
+  .tag{font-size:11px;padding:2px 7px;border-radius:6px;background:var(--card2);color:var(--txt2);}
+  .tag.g{color:var(--green);}.tag.a{color:var(--amber);}.tag.c{color:var(--accent2);}
+  .fase{position:absolute;top:10px;right:10px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;}
+  .fase.explodir{background:rgba(160,107,255,.15);color:var(--purple);}
+  .fase.crescendo{background:rgba(74,158,255,.15);color:var(--blue);}
+  .fase.alta{background:rgba(46,204,113,.15);color:var(--green);}
+  .selo-rec{display:inline-block;font-size:10px;font-weight:700;color:var(--amber);
+    border:1px solid var(--amber);border-radius:4px;padding:0 4px;margin-left:4px;}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:flex-start;
+    justify-content:center;padding:24px 16px;overflow-y:auto;z-index:50;}
+  .overlay.open{display:flex;}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;max-width:660px;
+    width:100%;padding:24px;position:relative;}
+  .panel h2{font-size:17px;margin-bottom:4px;padding-right:30px;}
+  .panel .sub{color:var(--txt2);font-size:13px;margin-bottom:18px;}
+  .block{margin-bottom:16px;}
+  .block .lbl{font-size:12px;color:var(--accent2);font-weight:700;text-transform:uppercase;
+    letter-spacing:.5px;margin-bottom:5px;overflow:hidden;}
+  .block .val{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:12px;
+    font-size:13px;white-space:pre-wrap;line-height:1.6;}
+  .meta{font-size:11px;color:var(--txt2);margin-top:5px;}
+  .subtabs{display:flex;gap:6px;margin-bottom:8px;}
+  .subtab{font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--line);
+    background:transparent;color:var(--txt2);cursor:pointer;}
+  .subtab.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .mini{flex:1;min-width:120px;text-align:center;background:var(--card2);border:1px solid var(--line);
+    border-radius:8px;padding:9px;font-size:13px;color:var(--txt);text-decoration:none;transition:.15s;}
+  .mini:hover{border-color:var(--accent);}
+  .copy{background:none;border:1px solid var(--line);color:var(--txt2);padding:4px 10px;border-radius:7px;
+    font-size:12px;cursor:pointer;float:right;margin-top:-2px;}
+  .copy:hover{border-color:var(--accent);color:var(--txt);}
+  .close{background:none;border:none;color:var(--txt2);font-size:26px;cursor:pointer;position:absolute;
+    top:16px;right:20px;line-height:1;}
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--line);
+    border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;
+    vertical-align:-3px;margin-right:6px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .hidden{display:none;}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <h1>Radar <span>Shopee</span></h1>
-    <p>Melhores produtos para fazer vídeo — em todos os nichos</p>
+    <p>Melhores produtos para fazer vídeo — escolha um nicho</p>
   </header>
 
-  <div class="controls">
-    <div class="field"><label>Páginas</label><input type="number" id="paginas" value="4" min="1" max="10"></div>
-    <button class="btn" id="btnBuscar" onclick="buscar()">Buscar produtos</button>
+  <!-- ETAPA 1: escolher nicho -->
+  <div id="etapaNicho">
+    <div class="step-title">1. Escolha o nicho que você quer explorar</div>
+    <div class="nichos" id="nichos"></div>
+    <div class="controls">
+      <div class="field"><label>Páginas por busca</label><input type="number" id="paginas" value="3" min="1" max="10"></div>
+      <button class="btn" id="btnBuscar" onclick="buscar()" disabled>Buscar produtos</button>
+    </div>
   </div>
 
-  <div id="filtrosArea" style="display:none">
+  <!-- ETAPA 2: resultados -->
+  <div id="etapaResultados" class="hidden">
+    <div class="controls">
+      <button class="btn btn-sec" onclick="voltarNicho()">← Trocar nicho</button>
+      <button class="btn" onclick="buscar()">↻ Buscar de novo</button>
+    </div>
     <div class="filtros" id="filtrosFase">
       <div class="filtro on" data-f="todos" onclick="setFase('todos',this)">Todas as fases</div>
       <div class="filtro" data-f="explodir" onclick="setFase('explodir',this)">🚀 Pode explodir</div>
       <div class="filtro" data-f="crescendo" onclick="setFase('crescendo',this)">📈 Crescendo</div>
       <div class="filtro" data-f="alta" onclick="setFase('alta',this)">🔥 Em alta</div>
-      <div class="filtro" data-f="poucos" onclick="setFase('poucos',this)">💎 Poucos afiliados</div>
+      <div class="filtro" data-f="poucos" onclick="setFase('poucos',this)">💎 Menos concorrência</div>
     </div>
-    <div class="filtros filtros-cat" id="filtrosCat"></div>
+    <div id="status"></div>
+    <div class="grid" id="grid"></div>
   </div>
-
-  <div id="status"></div>
-  <div class="grid" id="grid"></div>
 </div>
 
 <div class="overlay" id="overlay" onclick="if(event.target===this)fechar()">
@@ -116,106 +131,100 @@
 </div>
 
 <script>
-let produtos = [];
-let faseAtiva = "todos";
-let catAtiva = "todas";
+const NICHOS = [
+  {id:"moda_feminina",nome:"Moda Feminina",emoji:"👗"},
+  {id:"natal",nome:"Natal",emoji:"🎄"},
+  {id:"cozinha",nome:"Cozinha",emoji:"🍳"},
+  {id:"casa",nome:"Casa & Decoração",emoji:"🏠"},
+  {id:"beleza",nome:"Beleza",emoji:"💄"},
+  {id:"saude",nome:"Saúde & Bem-estar",emoji:"💊"},
+  {id:"fitness",nome:"Fitness",emoji:"💪"},
+  {id:"eletronicos",nome:"Eletrônicos",emoji:"📱"},
+  {id:"pet",nome:"Pet",emoji:"🐾"},
+  {id:"bebe",nome:"Bebê & Infantil",emoji:"🍼"},
+];
+const FASE_LABEL={explodir:"🚀 Pode explodir",crescendo:"📈 Crescendo",alta:"🔥 Em alta"};
 
-const FASE_LABEL = {
-  explodir: "🚀 Pode explodir",
-  crescendo: "📈 Crescendo",
-  alta: "🔥 Em alta",
-};
+let produtos=[];
+let nichoSel=null;
+let faseAtiva="todos";
+let dadosRoteiro={}; // guarda o roteiro aberto para o copiar funcionar
 
-async function buscar() {
-  const btn = document.getElementById("btnBuscar");
-  const status = document.getElementById("status");
-  const grid = document.getElementById("grid");
-  const paginas = document.getElementById("paginas").value || 4;
-  btn.disabled = true;
-  grid.innerHTML = "";
-  document.getElementById("filtrosArea").style.display = "none";
-  status.innerHTML = '<span class="spinner"></span> Buscando na Shopee, isso leva ~30 segundos...';
-  try {
-    const r = await fetch(`/api/buscar?paginas=${paginas}`);
-    const d = await r.json();
-    if (d.erro) { status.textContent = "Erro: " + d.erro; return; }
-    produtos = d.produtos;
-    status.textContent = `${produtos.length} produtos encontrados — clique em um para gerar o conteúdo`;
-    document.getElementById("filtrosArea").style.display = "block";
-    faseAtiva = "todos";
-    catAtiva = "todas";
-    document.querySelectorAll("#filtrosFase .filtro").forEach(x => x.classList.toggle("on", x.dataset.f === "todos"));
-    montarFiltrosCategoria();
+// monta os cards de nicho
+document.getElementById("nichos").innerHTML = NICHOS.map(n=>
+  `<div class="nicho" data-n="${n.id}" onclick="selecionarNicho('${n.id}',this)">
+    <span class="emoji">${n.emoji}</span>${n.nome}</div>`
+).join("");
+
+function selecionarNicho(id,el){
+  nichoSel=id;
+  document.querySelectorAll(".nicho").forEach(x=>x.classList.remove("sel"));
+  el.classList.add("sel");
+  document.getElementById("btnBuscar").disabled=false;
+}
+
+function voltarNicho(){
+  document.getElementById("etapaResultados").classList.add("hidden");
+  document.getElementById("etapaNicho").classList.remove("hidden");
+}
+
+async function buscar(){
+  if(!nichoSel){alert("Escolha um nicho primeiro.");return;}
+  const paginas=document.getElementById("paginas").value||3;
+  document.getElementById("etapaNicho").classList.add("hidden");
+  document.getElementById("etapaResultados").classList.remove("hidden");
+  const status=document.getElementById("status");
+  const grid=document.getElementById("grid");
+  grid.innerHTML="";
+  const nomeNicho=(NICHOS.find(n=>n.id===nichoSel)||{}).nome||nichoSel;
+  status.innerHTML=`<span class="spinner"></span> Buscando produtos de "${nomeNicho}" na Shopee...`;
+  try{
+    const r=await fetch(`/api/buscar?nicho=${encodeURIComponent(nichoSel)}&paginas=${paginas}`);
+    const d=await r.json();
+    if(d.erro){status.textContent="Erro: "+d.erro;return;}
+    produtos=d.produtos;
+    if(!produtos.length){status.textContent="Nenhum produto encontrado neste nicho. Tente outro.";return;}
+    status.textContent=`${produtos.length} produtos de "${nomeNicho}" — clique em um para gerar o conteúdo`;
+    faseAtiva="todos";
+    document.querySelectorAll("#filtrosFase .filtro").forEach(x=>x.classList.toggle("on",x.dataset.f==="todos"));
     renderGrid();
-  } catch (e) {
-    status.textContent = "Erro de conexão: " + e.message;
-  } finally {
-    btn.disabled = false;
+  }catch(e){
+    status.textContent="Erro de conexão: "+e.message;
   }
 }
 
-function montarFiltrosCategoria() {
-  const cont = document.getElementById("filtrosCat");
-  // conta quantos produtos por categoria e ordena por quantidade
-  const contagem = {};
-  produtos.forEach(p => { contagem[p.categoria] = (contagem[p.categoria] || 0) + 1; });
-  const cats = Object.keys(contagem).sort((a, b) => contagem[b] - contagem[a]);
-  let html = `<div class="filtro on" data-c="todas" onclick="setCat('todas',this)">Todas as categorias</div>`;
-  html += cats.map(c =>
-    `<div class="filtro" data-c="${c}" onclick="setCat('${c.replace(/'/g,"\\'")}',this)">${c} (${contagem[c]})</div>`
-  ).join("");
-  cont.innerHTML = html;
-}
-
-function setFase(f, el) {
-  faseAtiva = f;
-  document.querySelectorAll("#filtrosFase .filtro").forEach(x => x.classList.remove("on"));
+function setFase(f,el){
+  faseAtiva=f;
+  document.querySelectorAll("#filtrosFase .filtro").forEach(x=>x.classList.remove("on"));
   el.classList.add("on");
   renderGrid();
 }
 
-function setCat(c, el) {
-  catAtiva = c;
-  document.querySelectorAll("#filtrosCat .filtro").forEach(x => x.classList.remove("on"));
-  el.classList.add("on");
-  renderGrid();
+function listaFiltrada(){
+  if(faseAtiva==="todos")return produtos;
+  if(faseAtiva==="poucos")return produtos.filter(p=>p.poucos_afiliados);
+  return produtos.filter(p=>p.fase===faseAtiva);
 }
 
-function listaFiltrada() {
-  return produtos.filter(p => {
-    // filtro de fase
-    let passaFase = true;
-    if (faseAtiva === "poucos") passaFase = p.poucos_afiliados;
-    else if (faseAtiva !== "todos") passaFase = p.fase === faseAtiva;
-    // filtro de categoria
-    const passaCat = catAtiva === "todas" || p.categoria === catAtiva;
-    return passaFase && passaCat;
-  });
-}
-
-function renderGrid() {
-  const grid = document.getElementById("grid");
-  const lista = listaFiltrada();
-  if (!lista.length) {
-    grid.innerHTML = '<p style="color:var(--txt2);grid-column:1/-1;text-align:center;padding:20px">Nenhum produto nesta categoria. Tente outro filtro.</p>';
-    return;
-  }
-  grid.innerHTML = lista.map((p) => {
-    const idx = produtos.indexOf(p);
-    const concLabel = p.concorrencia_baixa > 0.6 ? "baixa" : p.concorrencia_baixa > 0.4 ? "média" : "alta";
-    const concClass = p.concorrencia_baixa > 0.6 ? "g" : p.concorrencia_baixa > 0.4 ? "a" : "c";
-    const rec = p.recomendado ? '<span class="selo-rec">TOP</span>' : "";
-    return `<div class="prod" onclick="abrir(${idx}, this)">
+function renderGrid(){
+  const grid=document.getElementById("grid");
+  const lista=listaFiltrada();
+  if(!lista.length){grid.innerHTML='<p style="color:var(--txt2);grid-column:1/-1;text-align:center;padding:20px">Nenhum produto nesta fase. Tente outro filtro.</p>';return;}
+  grid.innerHTML=lista.map(p=>{
+    const idx=produtos.indexOf(p);
+    const cl=p.concorrencia_baixa>0.6?"baixa":p.concorrencia_baixa>0.4?"média":"alta";
+    const cc=p.concorrencia_baixa>0.6?"g":p.concorrencia_baixa>0.4?"a":"c";
+    const rec=p.recomendado?'<span class="selo-rec">TOP</span>':"";
+    return `<div class="prod" onclick="abrir(${idx})">
       <div class="fase ${p.fase}">${FASE_LABEL[p.fase]}</div>
-      <img src="${p.imagem || ''}" onerror="this.style.opacity=.3">
+      <img src="${p.imagem||''}" onerror="this.style.opacity=.3">
       <div class="info">
         <div class="rank">#${p.posicao} · score ${p.score}</div>
         <div class="nome">${p.produto}</div>
         <div class="tags">
-          <span class="tag" style="color:var(--txt);background:var(--line)">${p.categoria}</span>
           <span class="tag g">${p.comissao}%${rec}</span>
           <span class="tag">R$${p.ganho}/venda</span>
-          <span class="tag ${concClass}">conc. ${concLabel}</span>
+          <span class="tag ${cc}">conc. ${cl}</span>
           <span class="tag">${p.vendas} vendas</span>
         </div>
       </div>
@@ -223,42 +232,48 @@ function renderGrid() {
   }).join("");
 }
 
-async function abrir(i, el) {
-  const p = produtos[i];
-  const overlay = document.getElementById("overlay");
-  const panel = document.getElementById("panel");
+async function abrir(i){
+  const p=produtos[i];
+  const overlay=document.getElementById("overlay");
+  const panel=document.getElementById("panel");
   overlay.classList.add("open");
-  panel.innerHTML = '<div style="text-align:center;padding:40px"><span class="spinner"></span> Montando o conteúdo...</div>';
-  try {
-    const r = await fetch("/api/roteiro", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ produto: p }),
-    });
-    const d = await r.json();
-    if (d.erro) { panel.innerHTML = `<button class="close" onclick="fechar()">×</button><p>Erro: ${d.erro}</p>`; return; }
+  panel.innerHTML='<div style="text-align:center;padding:40px"><span class="spinner"></span> Montando o conteúdo...</div>';
+  try{
+    const r=await fetch("/api/roteiro",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({produto:p})});
+    const d=await r.json();
+    if(d.erro){panel.innerHTML=`<button class="close" onclick="fechar()">×</button><p>Erro: ${d.erro}</p>`;return;}
+    dadosRoteiro=d; // guarda para o copiar
 
-    const esc = (s) => (s || "").replace(/\\/g, "\\\\").replace(/`/g, "\\`");
-    panel.innerHTML = `
+    panel.innerHTML=`
       <button class="close" onclick="fechar()">×</button>
       <h2>${p.produto}</h2>
       <div class="sub">${FASE_LABEL[p.fase]} · R$${p.preco} · ${p.comissao}% (R$${p.ganho}/venda) · ${p.vendas} vendas · ${p.rating}⭐</div>
 
       <div class="block">
-        <div class="lbl">📝 Legenda do vídeo <button class="copy" onclick="copiar(\`${esc(d.legenda)}\`,event)">copiar</button></div>
-        <div class="val">${d.legenda}</div>
+        <div class="lbl">📝 Legenda <button class="copy" onclick="copiar('legenda',this)">copiar</button></div>
+        <div class="val" id="v_legenda">${d.legenda}</div>
       </div>
 
       <div class="block">
-        <div class="lbl">🎬 Prompt — YouTube Create <button class="copy" onclick="copiar(\`${esc(d.prompt_youtube)}\`,event)">copiar</button></div>
-        <div class="val">${d.prompt_youtube}</div>
-        <div class="meta">${d.prompt_youtube_chars} caracteres (limite 900 ✓) · vídeo de 8s</div>
+        <div class="lbl">🎬 Prompt COM fala de IA</div>
+        <div class="subtabs">
+          <button class="subtab on" onclick="trocaSub('fala','yt',this)">YouTube Create</button>
+          <button class="subtab" onclick="trocaSub('fala','flow',this)">Google Flow</button>
+          <button class="copy" onclick="copiarPrompt('fala',this)">copiar</button>
+        </div>
+        <div class="val" id="v_fala">${d.com_fala.youtube_create}</div>
+        <div class="meta" id="m_fala">${d.chars.fala_yt} caracteres · 8s · sem marca/preço</div>
       </div>
 
       <div class="block">
-        <div class="lbl">🎥 Prompt — Google Flow <button class="copy" onclick="copiar(\`${esc(d.prompt_flow)}\`,event)">copiar</button></div>
-        <div class="val">${d.prompt_flow}</div>
-        <div class="meta">${d.prompt_flow_chars} caracteres (limite 900 ✓) · vídeo de 8s</div>
+        <div class="lbl">🎥 Prompt SÓ visual (sem fala)</div>
+        <div class="subtabs">
+          <button class="subtab on" onclick="trocaSub('visual','yt',this)">YouTube Create</button>
+          <button class="subtab" onclick="trocaSub('visual','flow',this)">Google Flow</button>
+          <button class="copy" onclick="copiarPrompt('visual',this)">copiar</button>
+        </div>
+        <div class="val" id="v_visual">${d.so_visual.youtube_create}</div>
+        <div class="meta" id="m_visual">${d.chars.visual_yt} caracteres · 8s · texto na tela</div>
       </div>
 
       <div class="row">
@@ -266,18 +281,57 @@ async function abrir(i, el) {
         <a class="mini" href="${p.link_produto}" target="_blank">🛍️ Página do produto</a>
       </div>
     `;
-  } catch (e) {
-    panel.innerHTML = `<button class="close" onclick="fechar()">×</button><p>Erro: ${e.message}</p>`;
+  }catch(e){
+    panel.innerHTML=`<button class="close" onclick="fechar()">×</button><p>Erro: ${e.message}</p>`;
   }
 }
 
-function fechar() { document.getElementById("overlay").classList.remove("open"); }
-function copiar(txt, ev) {
-  navigator.clipboard.writeText(txt);
-  const b = ev.target;
-  b.textContent = "copiado!";
-  setTimeout(() => b.textContent = "copiar", 1500);
+// troca YT/Flow dentro de um bloco
+let subSel={fala:"yt",visual:"yt"};
+function trocaSub(bloco,qual,el){
+  subSel[bloco]=qual;
+  el.parentElement.querySelectorAll(".subtab").forEach(x=>x.classList.remove("on"));
+  el.classList.add("on");
+  const d=dadosRoteiro;
+  if(bloco==="fala"){
+    document.getElementById("v_fala").textContent = qual==="yt"?d.com_fala.youtube_create:d.com_fala.google_flow;
+    document.getElementById("m_fala").textContent = (qual==="yt"?d.chars.fala_yt:d.chars.fala_flow)+" caracteres · 8s · sem marca/preço";
+  }else{
+    document.getElementById("v_visual").textContent = qual==="yt"?d.so_visual.youtube_create:d.so_visual.google_flow;
+    document.getElementById("m_visual").textContent = (qual==="yt"?d.chars.visual_yt:d.chars.visual_flow)+" caracteres · 8s · texto na tela";
+  }
 }
+
+// COPIAR — versão corrigida: lê o texto direto do dado guardado
+function copiar(campo,btn){
+  const txt = campo==="legenda" ? dadosRoteiro.legenda : "";
+  fazerCopia(txt,btn);
+}
+function copiarPrompt(bloco,btn){
+  const d=dadosRoteiro;
+  const qual=subSel[bloco];
+  let txt="";
+  if(bloco==="fala") txt = qual==="yt"?d.com_fala.youtube_create:d.com_fala.google_flow;
+  else txt = qual==="yt"?d.so_visual.youtube_create:d.so_visual.google_flow;
+  fazerCopia(txt,btn);
+}
+function fazerCopia(txt,btn){
+  const done=()=>{const o=btn.textContent;btn.textContent="copiado!";setTimeout(()=>btn.textContent=o,1500);};
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done).catch(()=>fallbackCopia(txt,done));
+  }else{
+    fallbackCopia(txt,done);
+  }
+}
+function fallbackCopia(txt,cb){
+  const ta=document.createElement("textarea");
+  ta.value=txt;ta.style.position="fixed";ta.style.opacity="0";
+  document.body.appendChild(ta);ta.focus();ta.select();
+  try{document.execCommand("copy");}catch(e){}
+  document.body.removeChild(ta);cb&&cb();
+}
+
+function fechar(){document.getElementById("overlay").classList.remove("open");}
 </script>
 </body>
 </html>
