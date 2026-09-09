@@ -1,161 +1,134 @@
-// Gera LEGENDA (com 5 hashtags virais) e DOIS prompts de video de 8 segundos
-// (YouTube Create e Google Flow), cada um com no maximo 900 caracteres.
-// Falas family friendly. Sem IA generativa — templates por categoria.
+// Gera LEGENDA (5 frases + 5 hashtags) e 4 PROMPTS de vídeo de 8s (<=900 chars):
+//  - Com fala de IA (YouTube Create e Google Flow)
+//  - Só visual, sem fala, com texto na tela (YouTube Create e Google Flow)
+// IMPORTANTE: os prompts NÃO citam marca nem preço.
 
 const CATEGORIAS = [
-  {
-    id: "cozinha",
-    kws: ["cozedor","ovos","cozinha","panela","fatiador","descasca","utensi","tábua","ralador","tapioc","boleira","forma","assadeira","air fryer","liquidificador","marmita"],
-    desejo: "praticidade que transforma a rotina na cozinha",
-    cena: "o produto em ação preparando algo apetitoso, em cima de uma bancada limpa e iluminada",
-    fala: "Isso mudou a minha cozinha!",
-    hashtags: ["#achadinhosdacozinha","#cozinhapratica","#shopeeachados","#dicasdecozinha","#receitafacil"],
-  },
-  {
-    id: "fitness",
-    kws: ["academia","fitness","top","calça","legging","suplex","conjunto fitness","short 2 em 1","compressão","modeladora","cinta"],
-    desejo: "confiança e caimento perfeito no treino",
-    cena: "uma pessoa vestindo a roupa e se movimentando com segurança em frente ao espelho de uma academia",
-    fala: "Caimento perfeito e sem transparência!",
-    hashtags: ["#modafitness","#lookdetreino","#fitnessbrasil","#shopeefinds","#roupadeacademia"],
-  },
-  {
-    id: "saude",
-    kws: ["melatonina","colágeno","vitamina","suplemento","cápsula","whey","creatina","ômega","chá","proteína","protein","pote 900","suplement"],
-    desejo: "mais energia, bem-estar e disposição no dia a dia",
-    cena: "uma pessoa acordando descansada e sorrindo, com luz suave da manhã entrando pela janela",
-    fala: "Minha disposição mudou completamente!",
-    hashtags: ["#bemestar","#autocuidado","#vidasaudavel","#saudeequalidade","#shopeeachadinhos"],
-  },
-  {
-    id: "beleza",
-    kws: ["sérum","skincare","clareador","hidratante","protetor","shampoo","máscara","batom","base","axila","virilha","perfume","creme"],
-    desejo: "resultado visível na pele e autoestima renovada",
-    cena: "close no rosto ou na pele mostrando textura suave e luminosa, com aplicação delicada do produto",
-    fala: "O resultado me surpreendeu!",
-    hashtags: ["#skincarebrasil","#cuidadoscomapele","#belezanatural","#autoestima","#shopeebeleza"],
-  },
-  {
-    id: "eletronico",
-    kws: ["fone","bluetooth","carregador","cabo","led","usb","suporte","luminária","câmera","smart","fonte tipo c","lâmpada","fita led","ventilador"],
-    desejo: "resolver de vez um probleminha chato do dia a dia",
-    cena: "o produto funcionando em close, com detalhes tecnológicos e um ambiente moderno ao fundo",
-    fala: "Como eu vivia sem isso?",
-    hashtags: ["#gadgets","#tecnologia","#achadinhostech","#shopeefinds","#novidades"],
-  },
-  {
-    id: "casa",
-    kws: ["manta","cobertor","lençol","lixeira","organizador","cabide","toalha","tapete","cortina","luminária","decoração","arandela","espelho","boleira"],
-    desejo: "deixar a casa mais bonita e aconchegante gastando pouco",
-    cena: "um cantinho da casa antes simples e depois transformado e aconchegante com o produto",
-    fala: "Meu cantinho ficou perfeito!",
-    hashtags: ["#decoração","#organização","#casadosonhos","#achadinhosdecasa","#shopeedecor"],
-  },
-  {
-    id: "pet",
-    kws: ["pet","cachorro","gato","ração","coleira","comedouro","brinquedo pet"],
-    desejo: "cuidar do pet com carinho gastando menos",
-    cena: "um pet feliz e fofo interagindo com o produto, com uma pessoa sorrindo ao lado",
-    fala: "Meu pet aprovou na hora!",
-    hashtags: ["#petlovers","#cachorros","#gatos","#vidadepet","#shopeepet"],
-  },
-  {
-    id: "maternidade",
-    kws: ["bebê","maternidade","gestante","fralda","mamadeira","infantil","criança","organizador mala"],
-    desejo: "facilitar a vida de quem cuida de um bebê",
-    cena: "um ambiente delicado de quarto de bebê, com o produto sendo usado com cuidado e carinho",
-    fala: "Facilitou demais a minha rotina!",
-    hashtags: ["#maternidade","#enxovaldebebe","#maedemenino","#maedemenina","#shopeebebe"],
-  },
+  { id:"natal", kws:["natal","enfeite natal","pisca","árvore natal","arvore natal","presente natal","guirlanda","papai noel","enfeite","natalino"],
+    desejo:"deixar o Natal mágico e aconchegante", cena:"um ambiente decorado para o Natal com luzes quentes brilhando e clima festivo",
+    fala:"O Natal chegou mais cedo!", tela:"CLIMA DE NATAL", hashtags:["#natal","#decoracaodenatal","#natal2025","#christmas","#festas"] },
+  { id:"cozinha", kws:["cozedor","ovos","cozinha","panela","fatiador","descasca","utensi","tábua","ralador","tapioc","boleira","forma","assadeira","air fryer","liquidificador","marmita"],
+    desejo:"a praticidade que transforma a rotina", cena:"o produto em ação preparando algo apetitoso numa bancada limpa e iluminada",
+    fala:"Isso mudou a minha cozinha!", tela:"VOCÊ PRECISA DISSO", hashtags:["#achadinhosdacozinha","#cozinhapratica","#dicasdecozinha","#organização","#receitafacil"] },
+  { id:"fitness", kws:["academia","fitness","top fitness","legging","suplex","conjunto fitness","short 2 em 1","compressão","modeladora","cinta"],
+    desejo:"a confiança de um caimento perfeito", cena:"uma pessoa vestindo a roupa e se movimentando com segurança em frente ao espelho",
+    fala:"Caimento perfeito e nada transparente!", tela:"O LOOK QUE FALTAVA", hashtags:["#modafitness","#lookdetreino","#fitnessbrasil","#treino","#academia"] },
+  { id:"moda_feminina", kws:["vestido","blusa feminina","saia","conjunto feminino","cropped","macacão","bolsa feminina"],
+    desejo:"aquele look que rende elogios", cena:"uma pessoa provando a peça e girando, com boa luz e fundo clean",
+    fala:"Amei esse look!", tela:"LOOK DO DIA", hashtags:["#modafeminina","#lookdodia","#tendência","#ootd","#estilo"] },
+  { id:"saude", kws:["melatonina","colágeno","vitamina","suplemento","cápsula","whey","creatina","ômega","chá","proteína","protein","pote 900"],
+    desejo:"mais energia e bem-estar no dia a dia", cena:"uma pessoa acordando disposta e sorrindo com luz suave da manhã",
+    fala:"Minha disposição mudou!", tela:"SUA ROTINA VAI MUDAR", hashtags:["#bemestar","#autocuidado","#vidasaudavel","#saude","#disposição"] },
+  { id:"beleza", kws:["sérum","serum","skincare","clareador","hidratante","protetor","shampoo","máscara","batom","base","axila","virilha","perfume","creme"],
+    desejo:"um resultado visível e autoestima renovada", cena:"close na pele mostrando textura suave e luminosa com aplicação delicada",
+    fala:"O resultado me surpreendeu!", tela:"NINGUÉM TE CONTOU ISSO", hashtags:["#skincare","#belezanatural","#cuidadoscomapele","#autoestima","#pele"] },
+  { id:"eletronico", kws:["fone","bluetooth","carregador","cabo","led","usb","suporte","luminária","câmera","smart","fonte tipo c","lâmpada","ventilador"],
+    desejo:"resolver de vez um probleminha chato", cena:"o produto funcionando em close com detalhes tecnológicos e ambiente moderno",
+    fala:"Como eu vivia sem isso?", tela:"ISSO É GENIAL", hashtags:["#gadgets","#tecnologia","#achadinhostech","#novidades","#tech"] },
+  { id:"casa", kws:["manta","cobertor","lençol","lixeira","organizador","cabide","toalha","tapete","cortina","luminária","decoração","arandela","espelho","almofada"],
+    desejo:"deixar a casa mais bonita e aconchegante", cena:"um cantinho da casa antes simples e depois transformado e aconchegante",
+    fala:"Meu cantinho ficou perfeito!", tela:"TRANSFORME SEU CANTINHO", hashtags:["#decoração","#organização","#casa","#homedecor","#aconchego"] },
+  { id:"pet", kws:["pet","cachorro","gato","ração","coleira","comedouro"],
+    desejo:"cuidar do pet com muito carinho", cena:"um pet feliz e fofo interagindo com o produto e uma pessoa sorrindo ao lado",
+    fala:"Meu pet aprovou na hora!", tela:"SEU PET VAI AMAR", hashtags:["#petlovers","#cachorros","#gatos","#vidadepet","#pet"] },
+  { id:"bebe", kws:["bebê","maternidade","gestante","fralda","mamadeira","infantil","criança","enxoval"],
+    desejo:"facilitar a vida de quem cuida de um bebê", cena:"um ambiente delicado de quarto de bebê com o produto usado com carinho",
+    fala:"Facilitou demais a rotina!", tela:"MÃES VÃO AMAR", hashtags:["#maternidade","#enxovaldebebe","#maedemenina","#maedemenino","#bebe"] },
 ];
 
-const GENERICA = {
-  id: "geral",
-  desejo: "resolver um problema do dia a dia por um preço que cabe no bolso",
-  cena: "o produto sendo usado de forma prática e satisfatória, bem iluminado e em foco",
-  fala: "Não acredito que achei por esse preço!",
-  hashtags: ["#achadinhos","#shopeebrasil","#ofertas","#dicasdecompra","#novidades"],
-};
+const GENERICA = { id:"geral", desejo:"resolver um problema do dia a dia", cena:"o produto sendo usado de forma prática e satisfatória, bem iluminado e em foco",
+  fala:"Não acredito que existia isso!", tela:"VOCÊ PRECISA VER ISSO", hashtags:["#achadinhos","#novidades","#dicas","#tendência","#compras"] };
 
-function categorizar(nome) {
-  const n = (nome || "").toLowerCase();
-  for (const c of CATEGORIAS) {
-    if (c.kws.some((k) => n.includes(k))) return c;
-  }
-  return GENERICA;
+function categorizar(nome){ const n=(nome||"").toLowerCase(); for(const c of CATEGORIAS){ if(c.kws.some(k=>n.includes(k))) return c; } return GENERICA; }
+function nomeGenerico(cat){
+  const map={cozinha:"esse utensílio de cozinha",fitness:"essa roupa de treino",moda_feminina:"essa peça",saude:"esse suplemento",
+    beleza:"esse produto de beleza",eletronico:"esse gadget",casa:"esse item de decoração",pet:"esse item para pet",bebe:"esse item para bebê",
+    natal:"essa decoração de Natal",geral:"esse produto"};
+  return map[cat.id]||"esse produto";
+}
+function cortar900(t){ return t.length<=900 ? t : t.slice(0,897).trimEnd()+"..."; }
+
+// ---- LEGENDA: exatamente 5 frases + 5 hashtags ----
+function gerarLegenda(cat, p){
+  const g = nomeGenerico(cat);
+  const f1 = cat.fala;
+  const f2 = `Descobri ${g} e não largo mais.`;
+  const f3 = `${cat.desejo[0].toUpperCase()+cat.desejo.slice(1)} de verdade.`;
+  const f4 = `Já são mais de ${p.vendas} pessoas que aprovaram.`;
+  const f5 = `Corre pra garantir o seu pelo link na sacolinha! 🛒`;
+  const frases = [f1,f2,f3,f4,f5].join(" ");
+  const tags = cat.hashtags.slice(0,5).join(" ");
+  return `${frases}\n\n${tags}`;
 }
 
-function nomeCurto(nome) {
-  let base = (nome || "").split(/[|\-\u2013\u2014]/)[0].trim();
-  base = base.replace(/\{.*?\}/g, "").replace(/\s+/g, " ").trim();
-  return base.split(" ").slice(0, 6).join(" ") || "esse produto";
+// ---- PROMPT COM FALA (IA) — sem marca e sem preço ----
+function promptFalaYouTube(cat){
+  const g = nomeGenerico(cat);
+  return cortar900(
+`Vídeo vertical 9:16 de 8 segundos, estilo review autêntico para redes sociais, com narração por voz de IA em português (family friendly, sem gírias).
+GANCHO VISUAL (0-2s): ${cat.cena}. Câmera aproxima no produto.
+GANCHO DE FALA (0-2s): voz animada dizendo "${cat.fala}".
+DESENVOLVIMENTO (2-6s): mostrar ${g} em uso, transmitindo ${cat.desejo}. TEXTO NA TELA: "${cat.tela}".
+FECHAMENTO (6-8s): close final no produto. TEXTO NA TELA: "Link na sacolinha". Narração: "Você precisa conhecer".
+IMPORTANTE: não citar marca nem preço. Iluminação clara, cores vivas, ritmo dinâmico, trilha alegre.`);
+}
+function promptFalaFlow(cat){
+  const g = nomeGenerico(cat);
+  return cortar900(
+`Cinematic vertical video 9:16, 8 seconds, authentic social-media review style. Voz de IA em português, tom simpático e family friendly.
+Cena (0-2s): ${cat.cena}. Movimento suave de câmera revelando o produto (gancho visual).
+Fala (0-2s): voz feminina jovem dizendo "${cat.fala}".
+Ação (2-6s): ${g} sendo usado de forma natural, transmitindo ${cat.desejo}, expressão de satisfação. Texto sobreposto: "${cat.tela}".
+Final (6-8s): close no produto com boa luz e clima convidativo, texto "Link na sacolinha".
+IMPORTANTE: não mencionar marca nem preço. Luz natural suave, cores quentes e vibrantes, foco nítido.`);
 }
 
-function gerarLegenda(cat, p, curto) {
-  const aberturas = {
-    cozinha: "Corre que esse achadinho vai transformar sua cozinha! \ud83d\ude0d",
-    fitness: "O look de treino que você procurava existe (e é baratinho)! \ud83d\udcaa",
-    saude: "Se cuidar nunca foi tão fácil e acessível \u2728",
-    beleza: "A dica de beleza que ninguém te contou \ud83e\udd2b",
-    eletronico: "Você precisa disso e ainda nem sabe \ud83d\udc40",
-    casa: "Transforme seu cantinho gastando pouco \ud83c\udfe1",
-    pet: "Seu pet merece esse mimo \ud83d\udc3e",
-    maternidade: "A vida de mãe ficou muito mais fácil \ud83d\udc95",
-    geral: "Esse achadinho vale cada centavo! \ud83d\uded2",
-  };
-  const abertura = aberturas[cat.id] || aberturas.geral;
-  const corpo = `${curto} por R$${p.preco} — ${cat.desejo}. Mais de ${p.vendas} pessoas já garantiram o seu! Link na sacolinha \ud83d\uded2`;
-  const tags = cat.hashtags.join(" ");
-  return `${abertura}\n\n${corpo}\n\n${tags}`;
+// ---- PROMPT SÓ VISUAL (sem fala) — texto na tela gerando desejo ----
+function promptVisualYouTube(cat){
+  const g = nomeGenerico(cat);
+  return cortar900(
+`Vídeo vertical 9:16 de 8 segundos, SEM narração e SEM fala, apenas música alegre e TEXTO NA TELA. Estilo satisfatório para redes sociais.
+0-2s: ${cat.cena}. Texto grande na tela: "${cat.tela}".
+2-5s: sequência de closes mostrando ${g} em uso, ângulos dinâmicos, transmitindo ${cat.desejo}. Texto: "OLHA QUE INCRÍVEL".
+5-8s: close final satisfatório do produto. Texto: "CORRE PRO LINK 🛒".
+IMPORTANTE: nenhuma voz, nenhuma marca, nenhum preço. Cortes rápidos no ritmo da música, cores vivas, imagem nítida e chamativa.`);
+}
+function promptVisualFlow(cat){
+  const g = nomeGenerico(cat);
+  return cortar900(
+`Cinematic vertical video 9:16, 8 seconds, NO voice and NO speech — only upbeat music and ON-SCREEN TEXT. Satisfying social-media aesthetic.
+0-2s: ${cat.cena}. Bold on-screen text: "${cat.tela}".
+2-5s: dynamic close-up sequence of ${g} in use, satisfying angles, conveying ${cat.desejo}. On-screen text: "OLHA QUE INCRÍVEL".
+5-8s: final satisfying close-up of the product. On-screen text: "CORRE PRO LINK".
+IMPORTANT: no voice, no brand, no price. Fast cuts synced to music, vibrant warm colors, crisp appealing footage.`);
 }
 
-function cortar900(txt) {
-  if (txt.length <= 900) return txt;
-  return txt.slice(0, 897).trimEnd() + "...";
-}
-
-function promptYouTubeCreate(cat, p, curto) {
-  const t =
-`Vídeo vertical de 8 segundos para divulgar "${curto}" (produto de ${cat.id}).
-GANCHO VISUAL (0-2s): ${cat.cena[0].toUpperCase() + cat.cena.slice(1)}. Movimento de câmera aproximando no produto.
-GANCHO DE FALA (0-2s): narração animada dizendo "${cat.fala}".
-DESENVOLVIMENTO (2-6s): mostrar o produto em uso destacando ${cat.desejo}. Texto na tela: "R$${p.preco}" e "${p.vendas}+ vendidos".
-FECHAMENTO (6-8s): produto em close com selo de oferta. Texto na tela: "Link na sacolinha". Narração: "Corre que tá em promoção!".
-ESTILO: iluminação clara, cores vivas, ritmo dinâmico, trilha animada. Falas em português, tom leve e family friendly.`;
-  return cortar900(t);
-}
-
-function promptGoogleFlow(cat, p, curto) {
-  const t =
-`Vídeo cinematográfico vertical 9:16, duração 8 segundos, para anúncio de "${curto}".
-Cena: ${cat.cena}. Câmera inicia em plano fechado e faz um movimento suave de revelação do produto nos primeiros 2 segundos (gancho visual).
-Ação: nos segundos 2 a 6, o produto é usado de forma natural, transmitindo ${cat.desejo}. Expressão de satisfação genuína.
-Áudio: voz feminina jovem e simpática em português dizendo "${cat.fala}" no início, tom family friendly, sem gírias.
-Segundos 6 a 8: close final no produto com boa iluminação e clima convidativo.
-Estilo visual: luz natural suave, cores quentes e vibrantes, foco nítido no produto, estética de review autêntico de rede social.`;
-  return cortar900(t);
-}
-
-export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ erro: "Use POST" });
+export default async function handler(req, res){
+  if(req.method!=="POST") return res.status(405).json({erro:"Use POST"});
   const p = req.body?.produto;
-  if (!p || !p.produto) return res.status(400).json({ erro: "Envie os dados do produto." });
-
+  if(!p || !p.produto) return res.status(400).json({erro:"Envie os dados do produto."});
   const cat = categorizar(p.produto);
-  const curto = nomeCurto(p.produto);
 
-  const legenda = gerarLegenda(cat, p, curto);
-  const promptYT = promptYouTubeCreate(cat, p, curto);
-  const promptFlow = promptGoogleFlow(cat, p, curto);
-
-  res.status(200).json({
+  const out = {
     categoria: cat.id,
-    legenda,
-    prompt_youtube: promptYT,
-    prompt_youtube_chars: promptYT.length,
-    prompt_flow: promptFlow,
-    prompt_flow_chars: promptFlow.length,
+    legenda: gerarLegenda(cat, p),
+    com_fala: {
+      youtube_create: promptFalaYouTube(cat),
+      google_flow: promptFalaFlow(cat),
+    },
+    so_visual: {
+      youtube_create: promptVisualYouTube(cat),
+      google_flow: promptVisualFlow(cat),
+    },
     link_afiliado: p.link_afiliado,
     link_produto: p.link_produto,
-  });
+  };
+  // adiciona contagem de caracteres de cada prompt
+  out.chars = {
+    fala_yt: out.com_fala.youtube_create.length,
+    fala_flow: out.com_fala.google_flow.length,
+    visual_yt: out.so_visual.youtube_create.length,
+    visual_flow: out.so_visual.google_flow.length,
+  };
+  res.status(200).json(out);
 }
