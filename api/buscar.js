@@ -1,13 +1,26 @@
-// Serverless function da Vercel — busca produtos na Shopee Afiliados.
-// As credenciais vêm das variáveis de ambiente (SHOPEE_APP_ID, SHOPEE_SECRET),
-// nunca ficam no código nem chegam ao navegador.
+// Serverless function da Vercel — busca produtos na Shopee Afiliados por NICHO.
+// Credenciais vêm das variáveis de ambiente (SHOPEE_APP_ID, SHOPEE_SECRET).
 
 import crypto from "crypto";
 
 const ENDPOINT = "https://open-api.affiliate.shopee.com.br/graphql";
 const CAMPOS =
   "itemId productName priceMin priceMax sales ratingStar commissionRate " +
-  "commission priceDiscountRate imageUrl shopId shopName offerLink productLink";
+  "commission priceDiscountRate imageUrl shopId shopName shopType offerLink productLink";
+
+// Palavras-chave de busca por nicho. A API busca por keyword.
+const NICHOS = {
+  "cozinha":         ["cozinha","utensílio cozinha","organizador cozinha","panela","air fryer"],
+  "casa":            ["decoração casa","organizador","luminária","cortina","tapete"],
+  "beleza":          ["skincare","maquiagem","sérum facial","protetor solar","perfume"],
+  "saude":           ["suplemento","vitamina","colágeno","whey protein","melatonina"],
+  "fitness":         ["roupa academia","legging fitness","conjunto fitness","tênis corrida"],
+  "moda_feminina":   ["vestido feminino","blusa feminina","conjunto feminino","saia","bolsa feminina"],
+  "eletronicos":     ["fone bluetooth","carregador","smartwatch","caixa de som","led"],
+  "pet":             ["pet","cachorro","gato","comedouro","coleira"],
+  "bebe":            ["bebê","maternidade","enxoval","brinquedo infantil"],
+  "natal":           ["natal","decoração natal","enfeite natal","presente natal","pisca pisca natal"],
+};
 
 function assinar(appId, secret, payload) {
   const ts = Math.floor(Date.now() / 1000);
@@ -16,9 +29,10 @@ function assinar(appId, secret, payload) {
   return { ts, sig };
 }
 
-async function chamarShopee(appId, secret, sortType, page, limit) {
+async function chamarShopee(appId, secret, keyword, sortType, page, limit) {
+  const kwPart = keyword ? `keyword:${JSON.stringify(keyword)},` : "";
   const query =
-    `query{productOfferV2(listType:0,sortType:${sortType},page:${page},limit:${limit})` +
+    `query{productOfferV2(${kwPart}sortType:${sortType},page:${page},limit:${limit})` +
     `{nodes{${CAMPOS}}pageInfo{hasNextPage}}}`;
   const payload = JSON.stringify({ query });
   const { ts, sig } = assinar(appId, secret, payload);
@@ -52,40 +66,11 @@ function ranquear(valores) {
   return mapa;
 }
 
-// Classifica a fase do produto a partir dos sinais disponiveis na API.
-// A API nao tem historico, entao usamos vendas + rating + concorrencia + comissao
-// como proxy. Retorna: "explodir", "crescendo" ou "alta".
+// Classifica a fase pelo que a API permite deduzir (sem histórico).
 function classificarFase(p) {
-  if (p._vendas >= 500) {
-    return "alta"; // ja vendendo forte
-  }
-  // abaixo de 500 vendas: pode ser aposta (explodir) ou tracao inicial (crescendo)
-  if (p._rating >= 4.6 && p._comissao >= 11 && p._concorrencia >= 0.55) {
-    return "explodir"; // chegou cedo, qualidade alta, paga bem, pouca concorrencia
-  }
+  if (p._vendas >= 500) return "alta";
+  if (p._rating >= 4.6 && p._comissao >= 11 && p._concorrencia >= 0.55) return "explodir";
   return "crescendo";
-}
-
-// Classifica o produto numa categoria "estilo Shopee" pelo nome.
-// A API retorna só o ID numérico da categoria (productCatIds), sem o nome,
-// então classificar pelo nome do produto é mais estável e legível.
-const CAT_REGRAS = [
-  ["Bebê & Infantil", ["bebê","bebe","maternidade","gestante","fralda","mamadeira","infantil","criança","crianca","brinquedo"]],
-  ["Beleza & Cuidado", ["sérum","serum","skincare","clareador","hidratante","protetor solar","shampoo","condicionador","máscara facial","batom","base","perfume","creme facial","maquiagem","cílios","cilios","unha","esmalte","depilador","sabonete","óleo capilar"]],
-  ["Saúde & Bem-estar", ["melatonina","colágeno","colageno","vitamina","suplemento","cápsula","capsula","whey","creatina","ômega","omega","proteína","protein","chá emagr","termogênico"]],
-  ["Pet", ["pet","cachorro","gato","ração","racao","coleira","comedouro"]],
-  ["Moda & Fitness", ["academia","fitness","legging","top fitness","suplex","conjunto","short","calça","calçado","tênis","tenis","camiseta","blusa","vestido","biquíni","biquini","sutiã","calcinha","cueca","meia","modeladora","cinta","jaqueta","moletom","pijama","bermuda","bolsa","mochila","carteira","óculos"]],
-  ["Eletrônicos", ["fone","bluetooth","carregador","cabo","usb","câmera","camera","smart","fonte tipo c","mouse","teclado","caixa de som","power bank","relógio","smartwatch","ventilador"]],
-  ["Limpeza & Utilidades", ["percarbonato","tira mancha","tira-mancha","desinfetante","detergente","limpa","alvejante","esponja","vassoura","rodo","luva"]],
-  ["Casa & Decoração", ["manta","cobertor","lençol","lencol","lixeira","organizador","cabide","toalha","tapete","cortina","luminária","luminaria","led","lâmpada","lampada","arandela","espelho","decoração","decoracao","almofada","vaso","panela","copo","garrafa","térmica","termica","utensílio","talher","boleira","forma","assadeira","air fryer","liquidificador","cozedor","fatiador","marmita","pote"]],
-];
-
-function categoriaDoProduto(nome) {
-  const n = (nome || "").toLowerCase();
-  for (const [cat, kws] of CAT_REGRAS) {
-    if (kws.some((k) => n.includes(k))) return cat;
-  }
-  return "Outros";
 }
 
 function pontuar(produtos) {
@@ -97,6 +82,11 @@ function pontuar(produtos) {
     p._ganho = num(p.commission);
   });
 
+  // --- PROXY DE "MENOS AFILIADOS" (concorrência) ---
+  // A API não informa nº de afiliados. Estimamos por:
+  //  - densidade da loja nos resultados (loja muito repetida = mais divulgada)
+  //  - saturação por vendas (produto no topo de vendas = já explorado)
+  //  - tipo de loja (Mall/oficial atrai muito mais afiliados)
   const freq = {};
   produtos.forEach((p) => (freq[p.shopId] = (freq[p.shopId] || 0) + 1));
   const maxFreq = Math.max(...Object.values(freq), 1);
@@ -105,7 +95,11 @@ function pontuar(produtos) {
   produtos.forEach((p) => {
     const satVen = rVen[p._vendas];
     const dens = (freq[p.shopId] - 1) / Math.max(maxFreq - 1, 1);
-    p._concorrencia = 1 - (0.6 * satVen + 0.4 * dens);
+    const tipos = p.shopType || [];
+    const oficial = Array.isArray(tipos) && tipos.some((t) => [1, 2, 4].includes(Number(t))) ? 1 : 0;
+    // saturação alta => concorrência alta => menos espaço para viralizar
+    const saturacao = 0.45 * satVen + 0.35 * dens + 0.20 * oficial;
+    p._concorrencia = 1 - saturacao; // 1 = pouca concorrência (bom)
   });
 
   const rCom = ranquear(produtos.map((p) => p._comissao));
@@ -113,11 +107,12 @@ function pontuar(produtos) {
   const rRat = ranquear(produtos.map((p) => p._rating));
 
   produtos.forEach((p) => {
+    // PESO MAIOR em concorrência baixa, como o usuário pediz (menos afiliados manda)
     p._score =
-      0.4 * p._concorrencia +
-      0.28 * rCom[p._comissao] +
-      0.2 * rVen2[p._vendas] +
-      0.12 * rRat[p._rating];
+      0.50 * p._concorrencia +
+      0.25 * rCom[p._comissao] +
+      0.15 * rVen2[p._vendas] +
+      0.10 * rRat[p._rating];
     p._fase = classificarFase(p);
   });
   return produtos;
@@ -126,46 +121,53 @@ function pontuar(produtos) {
 export default async function handler(req, res) {
   const APP_ID = process.env.SHOPEE_APP_ID;
   const SECRET = process.env.SHOPEE_SECRET;
-
   if (!APP_ID || !SECRET) {
     return res.status(500).json({
       erro: "Credenciais não configuradas. Defina SHOPEE_APP_ID e SHOPEE_SECRET nas variáveis de ambiente da Vercel.",
     });
   }
 
-  const paginas = Math.min(parseInt(req.query.paginas) || 4, 10);
+  const paginas = Math.min(parseInt(req.query.paginas) || 3, 10);
+  const nicho = (req.query.nicho || "").toLowerCase();
+  const keywords = NICHOS[nicho];
+  if (!keywords) {
+    return res.status(400).json({ erro: "Nicho inválido. Escolha um nicho da lista." });
+  }
 
   try {
     const vistos = {};
-    for (const sort of [2, 5]) {
-      for (let page = 1; page <= paginas; page++) {
-        const bloco = await chamarShopee(APP_ID, SECRET, sort, page, 50);
-        const nodes = bloco?.nodes || [];
-        for (const n of nodes) vistos[n.itemId] = n;
-        if (!bloco?.pageInfo?.hasNextPage) break;
-        await new Promise((r) => setTimeout(r, 400));
+    // Para cada palavra-chave do nicho, busca ordenando por comissão e por vendas.
+    for (const kw of keywords) {
+      for (const sort of [5, 2]) { // 5 = maior comissão, 2 = mais vendidos
+        for (let page = 1; page <= paginas; page++) {
+          const bloco = await chamarShopee(APP_ID, SECRET, kw, sort, page, 50);
+          const nodes = bloco?.nodes || [];
+          for (const n of nodes) vistos[n.itemId] = n;
+          if (!bloco?.pageInfo?.hasNextPage) break;
+          await new Promise((r) => setTimeout(r, 350));
+        }
       }
     }
 
     let produtos = Object.values(vistos);
-    // FILTRO: comissao SEMPRE acima de 5% (nunca 5% ou menos), rating minimo 4
+    // FILTRO: comissão SEMPRE acima de 5%, rating mínimo 4, vendas mínimas 30
     produtos = pontuar(produtos).filter(
       (p) => p._vendas >= 30 && p._rating >= 4 && p._comissao > 5
     );
+    // Ordena priorizando MENOS concorrência (score já pesa 50% nisso)
     produtos.sort((a, b) => b._score - a._score);
     produtos = produtos.slice(0, 45);
 
     const limpos = produtos.map((p, i) => ({
       posicao: i + 1,
       score: Math.round(p._score * 100),
-      fase: p._fase, // "explodir" | "crescendo" | "alta"
-      categoria: categoriaDoProduto(p.productName),
+      fase: p._fase,
       concorrencia_baixa: Math.round(p._concorrencia * 100) / 100,
-      poucos_afiliados: p._concorrencia >= 0.55, // proxy de baixa concorrencia
+      poucos_afiliados: p._concorrencia >= 0.6,
       produto: p.productName,
       preco: Math.round(p._preco * 100) / 100,
       comissao: Math.round(p._comissao),
-      recomendado: p._comissao >= 11, // destaque para 11%+
+      recomendado: p._comissao >= 11,
       ganho: Math.round(p._ganho * 100) / 100,
       vendas: Math.round(p._vendas),
       rating: p._rating,
@@ -176,7 +178,7 @@ export default async function handler(req, res) {
       link_produto: p.productLink,
     }));
 
-    res.status(200).json({ total: limpos.length, produtos: limpos });
+    res.status(200).json({ nicho, total: limpos.length, produtos: limpos });
   } catch (e) {
     res.status(500).json({ erro: e.message });
   }
